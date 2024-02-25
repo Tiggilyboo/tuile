@@ -1,0 +1,13 @@
+[package]
+name = "tuile"
+version = "0.1.0"
+
+[dependencies]
+libc = { version = "0.2", default-features = false }
+mlir-sys = "0.2"
+nom = "7"
+
+[profile.release]
+lto = true
+panic = "abort"
+strip = true
