@@ -4,8 +4,13 @@ version = "0.1.0"
 
 [dependencies]
 libc = { version = "0.2", default-features = false }
-mlir-sys = "0.2"
-nom = "7"
+# libc features with potential other backends in the future
+rustix = { version = "0.38", default-features = false, features = ["use-libc", "stdio", "time", "thread", "fs", "mm", "rand"] }
+# allocator
+mimalloc = { version = "0.1", default-features = false }
+# frontend
+tree-sitter = { version = "0.24", default-features = false }
+mlir-sys = { path = "./mlir-sys" }
 
 [profile.release]
 lto = true
