@@ -11,6 +11,7 @@ mimalloc = { version = "0.1", default-features = false }
 # frontend
 tree-sitter = { version = "0.24", default-features = false }
 mlir-sys = { path = "./mlir-sys" }
+log = { version = "0.4", default-features = false }
 
 [profile.release]
 lto = true
