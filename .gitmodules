@@ -1,3 +1,6 @@
 [submodule "mlir-sys"]
 	path = mlir-sys
 	url = git@github.com:Tiggilyboo/mlir-sys.git
+[submodule "grammars/tree-sitter-mlir"]
+	path = grammars/tree-sitter-mlir
+	url = https://github.com/artagnon/tree-sitter-mlir

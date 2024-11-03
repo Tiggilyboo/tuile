@@ -1,5 +1,7 @@
 extern crate alloc;
+use alloc::string::ToString;
 use core::{
+    ffi::FromBytesWithNulError,
     fmt::{Debug, Display},
     str::Utf8Error,
 };
@@ -12,6 +14,7 @@ pub struct Error(ErrorCode);
 pub enum ErrorCode {
     Rustix(rustix::io::Errno),
     Utf8Error(Utf8Error),
+    FromBytesWithNulError(FromBytesWithNulError),
 }
 
 impl Display for ErrorCode {
@@ -19,6 +22,7 @@ impl Display for ErrorCode {
         match &self {
             Self::Rustix(e) => write!(f, "{}", e),
             Self::Utf8Error(e) => write!(f, "{}", e),
+            Self::FromBytesWithNulError(e) => write!(f, "{}", e),
         }
     }
 }
@@ -41,6 +45,11 @@ impl From<Errno> for Error {
 impl From<crate::FromUtf8Error> for Error {
     fn from(value: crate::FromUtf8Error) -> Self {
         Error(ErrorCode::Utf8Error(value.utf8_error()))
+    }
+}
+impl From<rustix::ffi::FromBytesWithNulError> for Error {
+    fn from(value: rustix::ffi::FromBytesWithNulError) -> Self {
+        Error(ErrorCode::FromBytesWithNulError(value))
     }
 }
 
