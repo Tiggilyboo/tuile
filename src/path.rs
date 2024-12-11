@@ -1,7 +1,8 @@
-use core::{ffi::FromBytesWithNulError, fmt::Display};
-
-use alloc::string::String;
+use alloc::{ffi::CString, string::String};
+use core::fmt::Display;
 use rustix::io::Errno;
+
+use crate::error::Error;
 
 #[cfg(target_os = "windows")]
 pub const MAIN_SEPARATOR: char = '\\';
@@ -39,10 +40,37 @@ impl<'a> From<&'a PathBuf> for Path<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[repr(transparent)]
 pub struct Path<'a> {
     inner: &'a str,
+}
+
+impl<'a> Path<'a> {
+    pub fn is_relative(&self) -> bool {
+        !self.is_absolute()
+    }
+
+    pub fn is_absolute(&self) -> bool {
+        #[cfg(target_os = "windows")]
+        if self.inner.nth(1).eq(':') {
+            return true;
+        }
+        #[cfg(not(target_os = "windows"))]
+        if self.inner.starts_with(MAIN_SEPARATOR) {
+            return true;
+        }
+
+        return false;
+    }
+
+    pub fn exists(&self) -> bool {
+        if self.is_absolute() {
+            crate::fs::exists(self.inner)
+        } else {
+            crate::fs::exists_at(rustix::fs::CWD, self.inner)
+        }
+    }
 }
 
 impl<'a> Display for Path<'a> {
@@ -67,11 +95,10 @@ impl<'a> rustix::path::Arg for Path<'a> {
         Self: Sized,
         F: FnOnce(&core::ffi::CStr) -> rustix::io::Result<T>,
     {
-        let b = self.inner.as_bytes();
-        match core::ffi::CStr::from_bytes_with_nul(b) {
-            Ok(s) => f(s),
-            // TODO: What's a better way to do this?
-            Err(_) => Err(Errno::NOSTR),
+        match CString::new(self.inner) {
+            Ok(cstr) => f(&cstr),
+            // TODO: Better error code?
+            Err(e) => Err(Errno::FAULT),
         }
     }
 }

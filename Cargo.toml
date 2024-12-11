@@ -1,17 +1,16 @@
 [package]
 name = "tuile"
 version = "0.1.0"
+authors = ["Simon Willshire"]
 
 [dependencies]
-libc = { version = "0.2", default-features = false }
-# libc features with potential other backends in the future
-rustix = { version = "0.38", default-features = false, features = ["use-libc", "stdio", "time", "thread", "fs", "mm", "rand"] }
+rustix = { version = "0.38", default-features = false, features = ["stdio", "time", "thread", "fs", "mm", "rand"] }
 # allocator
 mimalloc = { version = "0.1", default-features = false }
 # frontend
 tree-sitter = { version = "0.24", default-features = false }
 mlir-sys = { path = "./mlir-sys" }
-log = { version = "0.4", default-features = false }
+log = { version = "0.4", default-features = false, features = ["max_level_trace", "release_max_level_warn"]}
 
 [profile.release]
 lto = true

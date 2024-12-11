@@ -1,11 +1,10 @@
 use crate::{
-    io,
-    time::{self, Instant},
+    error::{Error, ErrorCode},
+    io, time, Result,
 };
 
-pub struct Logger {
-    start: Instant,
-}
+static LOGGER: Logger = Logger;
+struct Logger;
 
 impl log::Log for Logger {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
@@ -13,38 +12,33 @@ impl log::Log for Logger {
     }
 
     fn log(&self, record: &log::Record) {
-        let now = time::now().elapsed(&self.start);
-        let sec = now.as_secs();
-        let hrs = sec / 3600;
-        let min = (sec / 60) % 60;
-        let sec = sec % 60;
-        let ms = now.subsec_nanos() / 1_000_000;
+        if !self.enabled(record.metadata()) {
+            return;
+        }
 
-        let line = crate::format!(
-            "[{:02}:{:02}:{:02}.{:03}] {:6} {}\n",
-            hrs,
-            min,
-            sec,
-            ms,
-            record.level(),
-            record.args()
-        );
+        let now = time::now();
+        let line = crate::format!("[{}] {:6} {}\n", now, record.level(), record.args());
 
         match record.level() {
             log::Level::Error => {
                 io::write_stderr(line.as_bytes()).ok();
             }
-            log::Level::Debug => {
-                io::write_stdout(line.as_bytes()).ok();
+            _ => {
+                io::println(&line).ok();
             }
-            _ => (),
         }
     }
 
     fn flush(&self) {}
 }
 
-pub fn init() -> Logger {
-    let start = time::now();
-    Logger { start }
+pub fn init_with_level(level: log::LevelFilter) -> Result<()> {
+    match log::set_logger(&LOGGER).map(|_| log::set_max_level(level)) {
+        Err(e) => Err(Error(ErrorCode::LoggerError(e))),
+        Ok(_) => Ok(()),
+    }
+}
+
+pub fn init() -> Result<()> {
+    init_with_level(log::LevelFilter::Error)
 }
